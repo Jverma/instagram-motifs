@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Instagram Analysis</title>
+	<style type="text/css">
+		body{
+			margin: 0;
+			font-family: Lato, sans-serif;
+			color: #160101;
+			font-size: 20px;
+		}
+
+		.label{
+			font-size: 15px;
+		}
+
+		.legend text,
+		.axis text {
+			font-size: 13px;
+			fill: #333;
+		}
+
+		.axis path,
+		.axis line{
+			fill: none;
+			stroke-width: 1px;
+			stroke: #777;
+		}
+
+		.circle{
+			fill-opacity: 0.65;
+		}
+
+		.bubble{
+			opacity: 1;
+			transition: opacity 0.3s;
+		}
+
+		.bubble1{
+			opacity: 1;
+			transition: opacity 0.3s;
+		}
+
+		/*.bubble:hover text{
+			opacity: 1;
+		}
+
+		.bubble:hover circle{
+			fill-opacity: 1;
+		}*/
+
+		.legend rect{
+			fill-opacity: 0.75;
+		}
+
+		.legeng:hover rect{
+			fill-opacity:1;
+		}
+
+		.page_title{
+		  margin-top: 1%;
+		  text-align: center;
+		  font: 40px palatino;
+		  color: #44535d
+		}
+
+		.page_title .sub_title{
+			font: 25px palatino;
+			color: #0a3566;
+		}
+
+		.intro{
+		  /*margin-top: 5%;*/
+		  margin-left: 20%;
+		  margin-right: 20%;
+		  text-align: center;
+		  /*font: 20px palatino*/
+		}
+
+		.data{
+		  margin-left: 20%;
+		  margin-right: 20%;
+		  text-align: center;
+		  /*font: 20px palatino;*/
+		  /*font-weight: 1000;*/
+		}
+
+		.author{
+		  text-align: center;
+		  font: 30px palatino;
+		  position: relative;
+		  margin-top: 1%;
+		}
+
+		.title{
+		  font: 30px palatino;
+		  /*color: #333;*/
+		  color: #294996;
+		}
+
+		.section{
+			text-align: center;
+		}
+
+		.control_panel{
+			text-align: center;
+		}
+
+		.container1{
+		  margin-left: 20%;
+		  margin-right: 20%;
+		  text-align: center;
+		  /*font: 20px palatino*/
+		}
+
+		.container2{
+		  margin-left: 20%;
+		  margin-right: 20%;
+		  text-align: center;
+		  /*font: 20px palatino*/
+		}
+
+		.categories{
+			background: teal;
+		}
+
+		.categories:hover{
+			cursor: pointer;
+		}
+
+		p {
+		    display: block;
+		    -webkit-margin-before: 1em;
+		    -webkit-margin-after: 1em;
+		    -webkit-margin-start: 0px;
+		    -webkit-margin-end: 0px;
+		}
+
+		i{
+			color: blue;
+			font: 20px palatino;
+		}
+
+		.intersting{
+			font-weight: bold;
+		}
+
+		.label_text{
+			margin-left: 20%;
+			margin-right: 20%;
+			text-align: center;
+			font-size: 15px;
+		}
+
+
+	</style>
+	<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://unpkg.com/d3-sankey@0.6"></script>
+	<script src="./static/javascript/neural_net.js"></script>
+</head>
+<body>
+	<div class="page_title">
+		<div>
+			<b>Visual Analysis of Instagram Posts</b>
+			<p class="sub_title"><em>Instagram passes through a ConvNet</em></p>
+		</div>
+	</div>
+
+	<div class="head_image" align="center">
+		<img src="./images/Instagram.jpg" alt="" align="middle" height="350" width="500">
+	</div>
+
+	<div class="intro">
+		<!-- <div class="title"> -->
+    	<!-- <b>
+    		Data
+	    </b>
+		</div> -->
+	    <p class="section">
+	    	<br></br>
+	    		After moving to India last year, I decided to be more active on Instagram, post lots of pictures of my endeavors in my home country. This has been a great way to document my life in New Delhi and travels around the country. 
+    		<br></br>
+	    		Over time, I have posted more than 500 pictures on Instagram that also include my earlier posts from my life in the US, travels in Europe, and short trips visiting my parents in India. I would like to believe that my instagram is a good indicator of my lifestyle, my interests, and aspirations.
+	    	<br></br>
+	    	<i>
+	    		In fact my instagram bio reads - 
+	    	</i>
+	    	<br></br>
+	    	<div class="profile" align="center">
+	    		<img src="./images/profile.jpeg" alt="" align="middle" height="150", width="500">
+	    	</div>
+	    	<br></br>  
+	    </p>
+	    <p>
+	    	In this exercise, I try to analyze all the images that I've posted on the instagram till November 2017, this excludes videos and stories. 
+	    	The goal of this exploration is to find <span class="intersting">motifs</span> in my pictures, though a quick glance through my posts can yeild prominent themes in these pictures. A friend once claimed to guess the topic of my next post in less than 3 attempts(!).
+	    <br></br> 
+	    	Instead of a human, the plan is to have the machine go through these images to find hidden chacteristics in them, and group them based on the <span class="intersting">learned motifs</span>. We have the tools from machine learning at our disposal, especially the current paradigm of deep neural networks which has shown great success in image analysis. In fact, this post is motivated by my interest in deep convolution neural networks.
+		<br>
+	    	Thus the refined goal is to automatically confirm the known <span class="intersting">motifs</span> and identify some unknown ones.
+	    </p>
+    </div>
+
+    <br>
+    <br>
+    <br>
+
+	<div class="data">
+	    <div class="title">
+	    	<b>
+	    		Data
+		    </b>
+		</div>
+		<p class="section">
+			The data consists of 526 images extracted from  instagram using the <a href="https://vibbi.com/instaport/">Instaport</a> app.
+		</p>
+		<br>
+		<br>
+		<img src="./images/ig1.jpeg" alt="" class="i1" height="600" width="500">
+		<img src="./images/ig2.jpeg" alt="" class="i2" height="600" width="500">
+		<!-- <img src="./images/ig3.jpeg" alt="" class="i3" height="150" width="500"> -->
+		<br>
+		<br>
+		<p class="section">
+			We cast the images into vectors, called <span class="intersting">features</span> in machine learning lingo. Any image can be defined by the values of the Red, Green, and Blue (RGB) color channels contributing to each pixel. Each image in this data has (640 * 640) pixels, and thus the vector of RGB channels, called <span class="intersting">raw features</span>, is of the dimension (640 * 640) * 3. These are very high-dimensional vectors, we will reshape these into (150*150)*3 dimensional features for further analysis.
+		</p>
+
+	</div>
+	<br>
+	<br>
+	<br>
+	<br>
+
+	<div class="data">
+    <div class="title">
+    	<b>
+    		Dimensional Reduction
+	    </b>
+	</div>
+    <p class="section">
+     Features that we have extracted for our images are very high-dimensional, and it's not possible to visualize them directly. Fortunately, there are methods to project higher-dimensional spaces onto lower dimensions such that the new space retains the intricaces of the relationships among the data points as much as possible. 
+     <br></br>
+     One of the most popular dimensional-reduction techniques is <a href="https://lvdmaaten.github.io/tsne/">t-distributed Stochaistic Neighbor Embedding(tsne)</a>, which is particularly effective for visualizing high-dimensional data by embedding the data into a 2-dimensional space. This technique casts relationships between data points to joint probability distributions, and then tried to find the low-dimensional representation such that a suitable measure of distance (e.g. Kullback-Leibler divergence) between the higher-dimensional and the lower-dimensional joint probabilities. 
+     <br></br>
+     We will employ an implementation from the python <a href="http://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html">scikit-learn package</a>. 
+	 It is important to note that the reduced features loose any meaning, and they do not lend themselves to any obvious interpretation. The primary goal is to preserve the proximity relation between the points to be able to visualize them.
+    </p>
+  </div>
+
+	<br>
+	<br>
+	<br>
+
+
+   <div class="data">
+    <div class="title">
+    	<b>
+    		Clustering
+	    </b>
+	</div>
+    <p class="section">
+     To further explore the data and find possible groups among images, the raw features are clustered using the <a href="https://en.wikipedia.org/wiki/K-means_clustering">K-Means algorithm</a>. This is the most popular clustering algorithm which starts with k random data points as intial centroids of the clusters, assign points to the nearest centroid, choose new centroid as the mean of the points in the clusters and repeat until a stopping criterion (<span class="intersting">Lloyd's optimization</span>). 
+     <br></br>
+     It is a very general purpose algorithm, which has shown success in many cases, although a big hindrance to its practical adaptability is the requirement of the apriori knowledge of the number of clusters (k parameter). 
+     <br></br>
+     In this current study, based on the exploration of the data, and the authors knowledge of his instagramming activity, k is chosen to be 10. I would like to admit that better choice of a clustering algorithm, and the parameters is surely possible via deep dive into the data and statistical analysis.
+    </p>
+  </div>
+	<br>
+	<br>
+	<br>
+	<br>
+
+	<div class="container2">
+		<div class="viz">
+		The 2-dimensional <em>tsne</em>-reduced features are then visualized as a scatterplot with first <em>tsne</em>-component along x-axis and the second <em>tsne</em>-component along y-axis. 
+		<br>
+		<i>Hover over any circle to see the image corresponding to that pair of reduced features.</i>
+		<br>
+		<br>
+		We also perform <span id="cluster1" class="categories">K-Means clustering of the raw features</span>. The points are colored according to the cluster they are in. 
+		<!-- <br> -->
+		<!-- <br> -->
+	</div>
+	</div>
+	<div class="label_text">
+		A few interesting obervations can me made, <span id="machiato" class="categories">these two machiatos</span> have a slightly differe latte art, but are same otherwise. <span id="ice" class="categories">These images</span> of snow in Ithaca, NY are placed overlapping to each other. The <span id="chopta" class="categories">Himlayas</span> I clicked on a hike to Tungnath, India. Some interesting clusters stand out e.g. one with <span id="right_cluster" class="categories">sky as a prominent feature</span> contains pictures of nature and buildings,  cluster of images contaning <span id="green" class="categories">green trees</span>.
+		<br>
+		There are of course many problems here, the picture from a <span id="udai" class="categories">lakeside dinner and a screenshot of Spotify</span> are overlapping. This is to be expected as both the images have blackish background and we are using color as our primary features. <span id="stupid" class="categories">A cluster emerges</span> containing varied images like beer bottle, temple, Spotify screenshot, night shot of a building etc. 
+		<br>
+		Many times, I click pictures of food/drinks from an lateral angle, interesting a <span id="bad" class="categories">lot of such images are placed together</span>, background color is also playing a role here.
+		
+	</div>
+	<br>
+	<br>
+	<br>	
+	<br>
+	<br>
+
+
+  <div class="data">
+    <div class="title">
+    	<b>
+    		Convolution Neural Networks
+	    </b>
+	</div>
+    <p class="section">
+     The raw features from the color channels were not very effective in capturing the intricacies of the images. Following the philosophy of machine learning, we would want to transform the data into a new space with the hope that the transformed data will be more suited to the task at hand, this is known as <span class="intersting">feature engineering</span> in machine learning literature.
+     We will learn refined features by passing the images through an <a href="https://en.wikipedia.org/wiki/Artificial_neural_network">artificial neural network (ANN)</a>, which is a machine learning technique loosely modeled on the functioning of human brain. Essentially, an ANN is a set of units, appropriately called a <span class="intersting">neurons</span>, which are organized in different layers. There are connections between neurons for transmitting signal, which usually flows from one layer to next. Each neuron gathers information from the neurons feeding into it, process it (a non-linear function followed by linear combination of the input signals), and passes on to a neuron in the next layer.
+     <br></br>
+
+     <div class="neuralnet"></div>
+
+     <br>
+     <br>
+     <br>
+     In the neural network above, the data is fed from the input layer on the left and the information flows from the left layer to right. In this architecture, each neuron in the previous layer feeds into every neuron in the next layer, such a network is called <span class="intersting">fully-connected neural network</span>.
+     <br>
+     <br>
+     <em><strong>Theoretically, a neural network can be trained to model any mathematical function i.e. it can transform data from one space to another.</strong></em>
+     <br>
+     <br>
+     <br>
+     <br>
+     The most successful type of neural networks for image data is the so-called <a href="https://en.wikipedia.org/wiki/Convolutional_neural_network">Convolutional Neural Networks (ConvNets)</a>. As an illustrative example of a <em>convolution</em>, think looking at an image through a magnifying glass by moving it over different parts to scan the full image. Here the magnifying class is called the <em>filter</em> of the convolution with <em>size</em> determined by the dimensions of the glass. In ConvNets for image understanding, an image is represented as a matrix of pixels, and a convolution filter operates as a matrix multiplication on the image.
+     <br>
+     <img src="./images/convolution.gif" alt="">
+     <div class="label_text">
+     	This matrix represents a black and white image. Each entry corresponds to one pixel, with value 0 for black and 1 for white. For more general images the value will typically be between 0 and 255.
+     	<p>Source: Denny Britz, WildML (<a href="http://www.wildml.com/2015/11/understanding-convolutional-neural-networks-for-nlp/">Post</a>)</p>
+     </div>
+     <br>
+     A colvolution is expected to pick up some features from the image. For example, to detect edges in an image 
+     <br>
+     <br>
+     <div align="center">
+     	<img src="./images/convolution_edge_detect.png" alt=""> <img src="./images/taj_edge_detect.jpg" alt="">
+     </div>
+	<br>
+	<br>
+	A ConvNet is build by stacking layers of convolutions, possibly with multiple filters in each layer. The results of a convolution layer are typically followed a <em>max-pooling</em> layer which takes the maximum of the output of the convolution layer. This architecture finds the features in the data but is not precisely the location of the feature. While training, a ConvNet learns the weights of the convolution filters.
+	<br>
+	<img src="./images/convnet.png" alt="">
+	<div class="label_text">
+		Typical Convolutional Neural Network
+		<p>
+			Source: Denny Britz, WildML (<a href="http://www.wildml.com/2015/11/understanding-convolutional-neural-networks-for-nlp/">Post</a>)
+		</p>
+	</div>
+	<br>
+     A ConvNet can be trained to build higher-order representations of an image (or a video), which then can be used for any image analysis and computer vision task. The ConvNets have be particularly successful in recognizing objects in images. Models based on ConvNets have shown spectacular results in <a href="https://en.wikipedia.org/wiki/ImageNet">ImageNet</a>, an annual competition organized to establish the state of the art in object recognition. ImageNet task consists of 1 million images of 1000 categories. The most popular models at ImageNet are Google's <a href="https://research.googleblog.com/2016/03/train-your-own-image-classifier-with.html">InceptionV3</a>, Microsoft's <a href="https://arxiv.org/abs/1512.03385">ResNet50</a> and <a href="http://www.robots.ox.ac.uk/~vgg/research/very_deep/">VGG16/VGG19</a> from Visual Graphics Group, Oxford. All these models extract higher-order features using a series of convolutional networks and map them onto the desired categories using a fully connected network.
+     <br>
+     <br> 
+
+
+     For this exercise, we will use the VGG19 model, which consists of 19 convolutional layers. 
+     <br>
+     <div class="vgg">
+     	<img src="./images/vgg19.png" alt="">
+     	<div class="label_text">Architecture of the VGG19 Network</div>
+     </div>
+     <br>
+     The output of the convolutional part is a mapped on a fully-connected layer containing 4096 units to obtain a representation of the same dimension. We will pass all our images through this network, and extract the output of the first fully-connected layer (fc1) to obtain 4096-dimensional representation of each image. 
+     <br>
+     <br>
+     Essentially, we have transformed our color channel features into 4096-dimensional vectors. We will now repeat the exercise with these refined features. 
+    </p>
+  </div>
+
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+
+  
+<div class="container1">
+	<div class="viz">
+		As earlier, the 2-dimensional <em>tsne</em>-reduced features are then visualized as a scatterplot.
+		<br>
+		<i>Hover over any circle to see the image corresponding to that pair of reduced features.</i>
+		<br>
+		<br>
+		We also performed <span id="cluster" class="categories">K-Means clustering of the convnet features</span>. The points are colored according to the cluster they are in. 
+		<br>
+		<br>
+		In addition, after passing the images through the VGG19, the most probable Imagenet category for each of the image is extracted. The Imagenet categories thus found were analyzed to build an ontology. We found the following major object types (higher-level ontology) in the data:
+		<br>
+		<i>click on these to see the corresponding points</i>
+	</div>
+	<br>
+	<div class="control_panel">
+		<span id='coffee' class="categories">Coffee</span>
+		<span id='food' class="categories">Food</span>
+		<span id='nature' class="categories">Nature</span>
+		<span id='wine' class="categories">Wine/Beer</span>
+		<span id='arch' class="categories">Architecture</span>
+		<span id='cycle' class="categories">Cycling</span>
+		<span id='books' class="categories">Books</span>
+		<span id='water' class="categories">Waterbodies</span>
+		<span id='misc' class="categories">Misc</span>
+	</div>
+	<br>
+</div>
+ <br>
+ <br>
+
+
+ <div class="container2"></div>
+
+<script type="text/javascript">
+
+	nn_svg = d3.select('.neuralnet').append('svg')
+		.attr('width', 800)
+		.attr('height', 300);
+
+	var nn_data = {'nodes':[{'name': '1', 'type':'in'}, {'name': '2', 'type':'in'}, {'name': '3', 'type':'in'}, {'name': '4', 'type':'in'}, {'name': '5', 'type':'h1'}, {'name': '6', 'type':'h1'}, {'name': '7', 'type':'h1'}, {'name': '8', 'type':'h2'}, {'name': '9', 'type':'h2'}, {'name': '10', 'type':'h2'}, {'name': '11', 'type':'out'}, {'name': '12', 'type':'out'}, {'name': '5a', 'type':'h1'}, {'name': '5b', 'type':'h1'}], 'links':[{'source': 0, 'target': 4, 'value': 1}, {'source': 0, 'target': 5, 'value': 1}, {'source': 0, 'target': 6, 'value': 1}, {'source': 0, 'target': 12, 'value': 1}, {'source': 0, 'target': 13, 'value': 1}, {'source': 1, 'target': 4, 'value': 1}, {'source': 1, 'target': 5, 'value': 1}, {'source': 1, 'target': 6, 'value': 1}, {'source': 1, 'target': 12, 'value': 1}, {'source': 1, 'target': 13, 'value': 1}, {'source': 2, 'target': 4, 'value': 1}, {'source': 2, 'target': 5, 'value': 1},{'source': 2, 'target': 6, 'value': 1}, {'source': 2, 'target': 12, 'value': 1}, {'source': 2, 'target': 13, 'value': 1}, {'source': 3, 'target': 4, 'value': 1}, {'source': 3, 'target': 5, 'value': 1}, {'source': 3, 'target': 6, 'value': 1}, {'source': 3, 'target': 12, 'value': 1}, {'source': 3, 'target': 13, 'value': 1}, {'source': 6, 'target': 7, 'value': 1}, {'source': 6, 'target': 8, 'value': 1}, {'source': 6, 'target': 9, 'value': 1}, {'source': 4, 'target': 7, 'value': 1}, {'source': 4, 'target': 8, 'value': 1}, {'source': 4, 'target': 9, 'value': 1}, {'source': 5, 'target': 7, 'value': 1}, {'source': 5, 'target': 8, 'value': 1}, {'source': 5, 'target': 9, 'value': 1}, {'source': 12, 'target': 7, 'value': 1}, {'source': 13, 'target': 7, 'value': 1}, {'source': 12, 'target': 8, 'value': 1}, {'source': 13, 'target': 8, 'value': 1}, {'source': 12, 'target': 9, 'value': 1}, {'source': 13, 'target': 9, 'value': 1}, {'source': 7, 'target': 10, 'value': 1}, {'source': 7, 'target': 11, 'value': 1}, {'source': 8, 'target': 10, 'value': 1}, {'source': 8, 'target': 11, 'value': 1}, {'source': 9, 'target': 10, 'value': 1}, {'source': 9, 'target': 11, 'value': 1}  ]};
+
+	draw_neuralnet(nn_data, nn_svg, 800, 300);
+
+
+	var margin = {top: 30, right: 50, bottom: 40, left:40};
+	var width = 1260 - margin.left - margin.right;
+	var height = 800 - margin.top - margin.bottom;
+
+
+	var svg2 = d3.select('.container2')
+		.append('svg')
+		.attr('width', width + margin.left + margin.right)
+		.attr('height', height + margin.top + margin.bottom)
+	.append('g')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+
+	var tooltip = d3.select("body")
+	    .append("div")
+	    .attr("class", "tooltip")
+	    .style("position", "absolute")
+	    .style("z-index", "10")
+	    .style("visibility", "hidden");
+
+
+	var xScale = d3.scaleLinear()
+		.range([0, width]);
+
+	var yScale = d3.scaleLinear()
+		.range([height, 0]);
+
+	var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+
+	d3.json('raw_vis_data.json', function(error, data){
+		data.forEach(function(d){
+			 d.name = d.name;
+			 d.pc1 = +d.pca1;
+			 d.pc2 = +d.pca2;
+			 d.clust = d.cluster_idx;
+		});
+
+		xScale.domain(d3.extent(data, function(d){
+			return d.pc1;
+		})).nice();
+
+		yScale.domain(d3.extent(data, function(d){
+			return d.pc2;
+		})).nice();
+
+
+		var bubble = svg2.selectAll('.bubble')
+			.data(data)
+			.enter().append('circle')
+			.attr('class', 'bubble1')
+			.attr('cx', function(d){return xScale(d.pc1);})
+			.attr('cy', function(d){ return yScale(d.pc2); })
+			.attr('r', 4)
+			.style('fill', 'steelblue')
+				// function(d){ return color(d.clust);})
+			.on('mouseover', mouseover)
+			.on('mousemove', mousemove)
+			.on('mouseout', mouseout);
+			// .on('click', function(d,i){
+			// 	console.log(i);
+			// });
+
+	})
+
+
+
+
+
+	d3.select('#cluster1')
+		.on('click', function(){
+			var active = cluster1.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('fill', function(d){
+					if (active){
+						return color(d.clust);
+					} else {
+						return 'steelblue'
+					}
+				})
+				cluster1.active = active;
+		});
+
+
+	var sky_images = [61, 288, 129, 310, 16, 408, 102, 21, 66, 114, 56, 498, 139, 131, 88, 10, 520, 470, 203, 11, 79, 501, 159, 110, 73, 46, 463, 117, 125, 515, 65, 1, 519, 206, 186, 87, 428, 123, 273, 104, 70, 322, 265, 183, 436, 3, 199, 443, 477, 78, 151, 24, 480, 208, 169, 329];
+
+	d3.select('#right_cluster')
+		.on('click', function(){
+			green.active =false;
+			chopta.active = false;
+			machiato.active = false;
+			ice.active = false;
+			udai.active = false;
+			bad.active = false;
+			stupid.active = false;
+			var active = right_cluster.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return sky_images.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				right_cluster.active = active;
+		});
+
+
+	var green = [141, 72, 209, 94, 9, 472, 423, 456, 296, 100, 173, 176];
+	d3.select('#green')
+		.on('click', function(){
+			right_cluster.active = false;
+			chopta.active = false;
+			machiato.active = false;
+			ice.active = false;
+			udai.active = false;
+			bad.active = false;
+			stupid.active = false;
+			var active = green.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return green.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				green.active = active;
+		});
+
+
+	var chopta = [41, 200, 384, 165];
+	d3.select('#chopta')
+		.on('click', function(){
+			right_cluster.active = false;
+			green.active = false;
+			machiato.active = false;
+			ice.active = false;
+			udai.active = false;
+			bad.active = false;
+			stupid.active = false;
+			var active = chopta.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return chopta.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				chopta.active = active;
+		});
+
+	var machiato = [181, 303];
+	d3.select('#machiato')
+		.on('click', function(){
+			right_cluster.active = false;
+			green.active = false;
+			chopta.active = false;
+			ice.active = false;
+			udai.active = false;
+			bad.active = false;
+			stupid.active = false;
+			var active = machiato.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return machiato.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				machiato.active = active;
+		});
+
+	var ice = [506, 499];
+	d3.select('#ice')
+		.on('click', function(){
+			right_cluster.active = false;
+			green.active = false;
+			chopta.active = false;
+			machiato.active = false;
+			udai.active = false;
+			bad.active = false;
+			stupid.active = false;
+			var active = ice.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return ice.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				ice.active = active;
+		});
+
+	var udai = [307, 348];
+	d3.select('#udai')
+		.on('click', function(){
+			right_cluster.active = false;
+			green.active = false;
+			chopta.active = false;
+			machiato.active = false;
+			ice.active = false;
+			bad.active = false;
+			stupid.active = false;
+			var active = udai.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return udai.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				udai.active = active;
+		});
+
+
+	var bad = [182, 180, 439, 388, 433, 448, 465, 259, 375, 387, 284, 459, 328, 455, 446, 201, 386, 366, 382, 378, 197, 424, 413, 268, 312, 453, 441, 504, 217, 421, 464, 383, 393];
+	d3.select('#bad')
+		.on('click', function(){
+			right_cluster.active = false;
+			green.active = false;
+			chopta.active = false;
+			machiato.active = false;
+			ice.active = false;
+			udai.active = false;
+			stupid.active = false;
+			var active = bad.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return bad.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				bad.active = active;
+		});
+
+
+	var stupid = [352, 43, 356, 133, 245, 195, 289, 6];
+	d3.select('#stupid')
+		.on('click', function(){
+			right_cluster.active = false;
+			green.active = false;
+			chopta.active = false;
+			machiato.active = false;
+			ice.active = false;
+			udai.active = false;
+			bad.active = false;
+			var active = stupid.active ? false : true;
+			d3.selectAll('.bubble1')
+				.style('opacity', function(d,i){
+					if(active){
+						return stupid.indexOf(i) != -1 ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				stupid.active = active;
+		});
+
+
+	// var not_espressos = [301, 500, 274, 215, 237, 111, 156, 74, 201, 395];
+	// d3.select('#stupid')
+	// 	.on('click', function(){
+	// 		var active = stupid.active ? false : true;
+	// 		d3.selectAll('.bubble')
+	// 			.style('opacity', function(d,i){
+	// 				if(active){
+	// 					return stupid.indexOf(i) != -1 ? '1': '0.1';
+	// 				} else {
+	// 					return '1';
+	// 				}
+	// 			})
+	// 			stupid.active = active;
+	// 	});
+
+
+
+
+
+
+	d3.select('#cluster')
+		.on('click', function(){
+			var active = cluster.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('fill', function(d){
+					if (active){
+						return color(d.clust);
+					} else {
+						return 'steelblue'
+					}
+				})
+				cluster.active = active;
+		});
+
+
+
+
+
+
+
+	d3.select('#coffee')
+		.on('click', function(){
+			food.active = false;
+			nature.active = false;
+			wine.active =false;
+			arch.active = false;
+			cycle.active = false;
+			books.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = coffee.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Coffee' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				coffee.active = active; 
+		});
+
+
+	d3.select('#food')
+		.on('click', function(){
+			coffee.active = false;
+			nature.active = false;
+			wine.active =false;
+			arch.active = false;
+			cycle.active = false;
+			books.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = food.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Food' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				food.active = active; 
+		});
+
+
+	d3.select('#nature')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			wine.active =false;
+			arch.active = false;
+			cycle.active = false;
+			books.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = nature.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Nature' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				nature.active = active; 
+		});
+
+
+	d3.select('#arch')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			wine.active =false;
+			nature.active = false;
+			cycle.active = false;
+			books.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = arch.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Architecture' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				arch.active = active; 
+		});
+
+
+
+	d3.select('#books')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			wine.active =false;
+			arch.active = false;
+			cycle.active = false;
+			nature.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = books.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Books' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				books.active = active; 
+		});
+
+
+
+	d3.select('#water')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			wine.active =false;
+			arch.active = false;
+			cycle.active = false;
+			books.active = false;
+			nature.active =false;
+			misc.active = false;
+			var active = water.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Waterbodies' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				water.active = active; 
+		});
+
+
+
+
+	d3.select('#wine')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			nature.active =false;
+			arch.active = false;
+			cycle.active = false;
+			books.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = wine.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Wine/Beer' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				wine.active = active; 
+		});
+
+
+	d3.select('#cycle')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			wine.active =false;
+			arch.active = false;
+			nature.active = false;
+			books.active = false;
+			water.active =false;
+			misc.active = false;
+			var active = cycle.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Cycling' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				cycle.active = active; 
+		});
+
+
+	d3.select('#misc')
+		.on('click', function(){
+			coffee.active = false;
+			food.active = false;
+			wine.active =false;
+			arch.active = false;
+			cycle.active = false;
+			books.active = false;
+			water.active =false;
+			nature.active = false;
+			var active = misc.active ? false : true;
+			d3.selectAll('.bubble')
+				.style('opacity', function(d){
+					if (active){
+						return d.higher_cat == 'Misc' ? '1': '0.1';
+					} else {
+						return '1';
+					}
+				})
+				misc.active = active; 
+		});
+
+
+	
+
+	var svg1 = d3.select('.container1')
+		.append('svg')
+		.attr('width', width + margin.left + margin.right)
+		.attr('height', height + margin.top + margin.bottom)
+	.append('g')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+
+
+	d3.json('visualization_data.json', function(error, data){
+		data.forEach(function(d){
+			 d.name = d.name;
+			 d.pc1 = +d.pca1;
+			 d.pc2 = +d.pca2;
+			 d.category = d.imagenet.join(' ')
+			 d.clust = d.cluster_idx
+			 d.higher_cat = d.higher_cat;
+		});
+
+		xScale.domain(d3.extent(data, function(d){
+			return d.pc1;
+		})).nice();
+
+		yScale.domain(d3.extent(data, function(d){
+			return d.pc2;
+		})).nice();
+
+
+		var bubble = svg1.selectAll('.bubble')
+			.data(data)
+			.enter().append('circle')
+			.attr('class', 'bubble')
+			.attr('cx', function(d){return xScale(d.pc1);})
+			.attr('cy', function(d){ return yScale(d.pc2); })
+			.attr('r', 4)
+			.style('fill', 'steelblue')
+				// function(d){ return color(d.clust);})
+			.on('mouseover', mouseover)
+			.on('mousemove', mousemove)
+			.on('mouseout', mouseout);
+
+	})
+
+
+
+function mouseover(d){
+  tooltip.transition()
+  	.duration(200)
+  	.style("visibility", "visible")
+  tooltip.html(d.category ? "<img src=" + d.name + " height='200' width='200'>" + "</br>" + "Predicted Categories: " + d.category : "<img src=" + d.name + " height='200' width='200'>")
+  	.style("left", (d3.event.pageX + 5) + "px")
+  	.style("top", (d3.event.pageY - 25) + "px");
+  }
+
+
+ function mouseout(d){
+ 	tooltip.transition()
+		.duration(200)
+	 	.style('visibility', 'hidden');
+ }
+
+
+ function mousemove(d){
+ 	return tooltip.style("top", (d3.event.pageY-52) + "px").style("left", (d3.event.pageX+18) + "px");
+ }
+
+
+</script>
+<div class="data"> 
+	Most of the coffee images are made to lie closer to each other by the tsne-embedding this can also be confirmed by clustering. One can also check that the coffee images which are far from the main cluster, are, in fact, different e.g. images of glass (coffee) containers which are distinct from the usual espressos. The projection also does a very good job of getting most of the nature pictures together in the scatterplot, and those far from the main cluster are either misclassified by the VGG19 model or are very different images even through they were assigned to the same category in the ontology.  
+	<br>
+	<br>
+	<br>
+</div>
+<br>
+<div class="data">
+	<div class="title">
+    	<b>
+    		Conclusion
+	    </b>
+	</div>
+	<p class="section">
+	These high-level features extracted from the VGG19 convolution neural network does a good job of mapping similar images closer to each other in the 4096-dimensional space, which facilitates efficient classification of the objects in the images into 1000 ImageNet categories. Here we used these features for a different task - clustering, and since they capture intricate characteristics of the images, the clustering results come out very reasonable. Notice that the ontology was created from the most probable ImageNet categories predicted by the VGG19 network, and there can be some errors or misclassifications.
+	<br>
+	<br>
+	There is obvious room for improvement, a better model can be used, the clustering algorithm and parameters can be chosen in more data-driven fashion, and ImageNet categories can be combined in an hierarachy using a more sophisticated method. In the end, this was an exercise to review the concepts and workings of convolutional neural networks and image classification problem. As someone who is very active on social media, and with special interest in personal data, this hwas been a fun exploration on my Instagram activity. 
+	</p>
+</div>
+
+
+
+<!-- <div class="data">
+    <div class="title">
+    	<b>
+    		References
+	    </b>
+	</div>
+    <p class="section">
+     <ul class="li"></ul>
+     <ul class="li"></ul>
+     <ul class="li"></ul>
+     <ul class="li"></ul>
+     <ul class="li"></ul>
+    </p>
+</div> -->
+<br>
+<br>
+<br>
+<br>
+<br>
+<div class="data">
+	Created by <a href="http://jverma.github.io/">Janu Verma</a>.
+	<br>
+	<a href="https://twitter.com/januverma">twitter</a>
+</div>
+<br>
+<br>
+	
+</body>
+</html>
